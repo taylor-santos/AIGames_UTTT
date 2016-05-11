@@ -80,72 +80,71 @@ struct board {
 		int opponent = !(player - 1) + 1;
 		for (int y = 0; y < 3; ++y)
 		{
-			if (macroboard[0][y] == player && macroboard[1][y] == player && macroboard[2][y] == player)
+/*DONE*/	if (macroboard[0][y] == player && macroboard[1][y] == player && macroboard[2][y] == player)
 			{
 				return INT_MAX;
 			}
-			if (macroboard[0][y] == opponent && macroboard[1][y] == opponent && macroboard[2][y] == opponent)
+/*DONE*/	if (macroboard[0][y] == opponent && macroboard[1][y] == opponent && macroboard[2][y] == opponent)
 			{
 				return INT_MIN;
 			}
 		}
 		for (int x = 0; x < 3; ++x)
 		{
-			if (macroboard[x][0] == player && macroboard[x][1] == player && macroboard[x][2] == player)
+/*DONE*/	if (macroboard[x][0] == player && macroboard[x][1] == player && macroboard[x][2] == player)
 			{
 				return INT_MAX;
 			}
-			if (macroboard[x][0] == opponent && macroboard[x][1] == opponent && macroboard[x][2] == opponent)
+/*DONE*/	if (macroboard[x][0] == opponent && macroboard[x][1] == opponent && macroboard[x][2] == opponent)
 			{
 				return INT_MIN;
 			}
 		}
-		if (macroboard[0][0] == player && macroboard[1][1] == player && macroboard[2][2] == player)
+/*DONE*/if (macroboard[0][0] == player && macroboard[1][1] == player && macroboard[2][2] == player)
 			return INT_MAX;
-		if (macroboard[2][0] == player && macroboard[1][1] == player && macroboard[0][2] == player)
+/*DONE*/if (macroboard[2][0] == player && macroboard[1][1] == player && macroboard[0][2] == player)
 			return INT_MAX;
-		if (macroboard[0][0] == opponent && macroboard[1][1] == opponent && macroboard[2][2] == opponent)
+/*DONE*/if (macroboard[0][0] == opponent && macroboard[1][1] == opponent && macroboard[2][2] == opponent)
 			return INT_MIN;
-		if (macroboard[2][0] == opponent && macroboard[1][1] == opponent && macroboard[0][2] == opponent)
+/*DONE*/if (macroboard[2][0] == opponent && macroboard[1][1] == opponent && macroboard[0][2] == opponent)
 			return INT_MIN;
 		int score = 0;
 		for (int gridY = 0; gridY < 3; ++gridY)
 		{
 			for (int gridX = 0; gridX < 3; ++gridX)
 			{
-				if (macroboard[gridX][gridY] == player)
+/*DONE*/		if (macroboard[gridX][gridY] == player)
 				{
-					score += 20;
-				}else if (macroboard[gridX][gridY] == opponent)
+					score += 10;
+				}
+/*DONE*/		else if (macroboard[gridX][gridY] == opponent)
 				{
-					score -= 20;
+					score -= 10;
 				}
 				else if (macroboard[gridX][gridY] == 0 || macroboard[gridX][gridY] == -1)
 				{
-					for (int y = 0; y < 3; ++y)//Vertical two-in-a-row
+					for (int y = 0; y < 3; ++y)//Horizontal two-in-a-row
 					{
 						int currPlayer = field[3 * gridX + 1][3 * gridY + y];
 						if (currPlayer > 0)
 						{
-							if ((field[3 * gridX][3 * gridY + y] == player && field[3 * gridX + 2][3 * gridY + y] == 0) || // X|X|_
-								(field[3 * gridX][3 * gridY + y] == 0 && field[3 * gridX + 2][3 * gridY + y] == player))   // _|X|X
+							if ((field[3 * gridX][3 * gridY + y] == currPlayer && field[3 * gridX + 2][3 * gridY + y] == 0) || // X|X|_
+								(field[3 * gridX][3 * gridY + y] == 0 && field[3 * gridX + 2][3 * gridY + y] == currPlayer))   // _|X|X
 							{
-								score++;
-							}
-							if ((field[3 * gridX][3 * gridY + y] == opponent && field[3 * gridX + 2][3 * gridY + y] == 0) || // X|X|_
-								(field[3 * gridX][3 * gridY + y] == 0 && field[3 * gridX + 2][3 * gridY + y] == opponent))   // _|X|X
-							{
-								score--;
+								if (currPlayer == player)
+									score += 4;
+								if (currPlayer == opponent)
+									score -= 4;
 							}
 						}
 						else if (currPlayer == 0){
-							if (field[3 * gridX][3 * gridY + y] == field[3 * gridX + 2][3 * gridY + y] && field[3 * gridX][3 * gridY + y] == player) // X|_|X
+							if (field[3 * gridX][3 * gridY + y] == player && field[3 * gridX + 2][3 * gridY + y] == player) // X|_|X
 							{
-								score++;
+								score+= 4;
 							}
-							if (field[3 * gridX][3 * gridY + y] == field[3 * gridX + 2][3 * gridY + y] && field[3 * gridX][3 * gridY + y] == opponent) // X|_|X
+							else if (field[3 * gridX][3 * gridY + y] == opponent && field[3 * gridX + 2][3 * gridY + y] == opponent) // X|_|X
 							{
-								score--;
+								score-= 4;
 							}
 						}
 					}
@@ -154,25 +153,23 @@ struct board {
 						int currPlayer = field[3 * gridX + x][3 * gridY + 1];
 						if (currPlayer > 0)
 						{
-							if ((field[3 * gridX + x][3 * gridY] == player && field[3 * gridX + x][3 * gridY + 2] == 0) || // X|X|_
-								(field[3 * gridX + x][3 * gridY] == 0 && field[3 * gridX + x][3 * gridY + 2] == player))   // _|X|X
+							if ((field[3 * gridX + x][3 * gridY] == currPlayer && field[3 * gridX + x][3 * gridY + 2] == 0) || // X|X|_
+								(field[3 * gridX + x][3 * gridY] == 0 && field[3 * gridX + x][3 * gridY + 2] == currPlayer))   // _|X|X
 							{
-								score++;
-							}
-							if ((field[3 * gridX + x][3 * gridY] == opponent && field[3 * gridX + x][3 * gridY + 2] == 0) || // X|X|_
-								(field[3 * gridX + x][3 * gridY] == 0 && field[3 * gridX + x][3 * gridY + 2] == opponent))   // _|X|X
-							{
-								score--;
+								if (currPlayer == player)
+									score += 4;
+								if (currPlayer == opponent)
+									score -= 4;
 							}
 						}
 						else if (currPlayer == 0) {
-							if (field[3 * gridX + x][3 * gridY] == field[3 * gridX + x][3 * gridY + 2] && field[3 * gridX + x][3 * gridY] == player) // X|_|X
+							if (field[3 * gridX + x][3 * gridY] == player && field[3 * gridX + x][3 * gridY + 2] == player) // X|_|X
 							{
-								score++;
+								score += 4;
 							}
-							if (field[3 * gridX + x][3 * gridY] == field[3 * gridX + x][3 * gridY + 2] && field[3 * gridX + x][3 * gridY] == opponent) // X|_|X
+							else if (field[3 * gridX + x][3 * gridY] == opponent && field[3 * gridX + x][3 * gridY + 2] == opponent) // X|_|X
 							{
-								score--;
+								score -= 4;
 							}
 						}
 					}
@@ -181,12 +178,12 @@ struct board {
 						if ((field[3 * gridX][3 * gridY] == player && field[3 * gridX + 2][3 * gridY + 2] == 0) || //Top left to bottom right
 							(field[3 * gridX][3 * gridY] == 0 && field[3 * gridX + 2][3 * gridY + 2] == player))
 						{
-							score++;
+							score+= 4;
 						}
 						if ((field[3 * gridX + 2][3 * gridY] == player && field[3 * gridX][3 * gridY + 2] == 0) || //Top right to bottom left
 							(field[3 * gridX + 2][3 * gridY] == 0 && field[3 * gridX][3 * gridY + 2] == player))
 						{
-							score++;
+							score+= 4;
 						}
 					}
 					if (field[3 * gridX + 1][3 * gridY + 1] == opponent) //Center is claimed
@@ -194,12 +191,12 @@ struct board {
 						if ((field[3 * gridX][3 * gridY] == opponent && field[3 * gridX + 2][3 * gridY + 2] == 0) || //Top left to bottom right
 							(field[3 * gridX][3 * gridY] == 0 && field[3 * gridX + 2][3 * gridY + 2] == opponent))
 						{
-							score--;
+							score-= 4;
 						}
 						if ((field[3 * gridX + 2][3 * gridY] == opponent && field[3 * gridX][3 * gridY + 2] == 0) || //Top right to bottom left
 							(field[3 * gridX + 2][3 * gridY] == 0 && field[3 * gridX][3 * gridY + 2] == opponent))
 						{
-							score--;
+							score-= 4;
 						}
 					}
 					if (field[3 * gridX + 1][3 * gridY + 1] == 0)
@@ -207,12 +204,12 @@ struct board {
 						if ((field[3 * gridX][3 * gridY] == player && field[3 * gridX + 2][3 * gridY + 2] == player) || //Top left to bottom right
 							(field[3 * gridX + 2][3 * gridY] == player && field[3 * gridX][3 * gridY + 2] == player))   //Top right to bottom left
 						{
-							score++;
+							score+= 4;
 						}
 						if ((field[3 * gridX][3 * gridY] == opponent && field[3 * gridX + 2][3 * gridY + 2] == opponent) || //Top left to bottom right
 							(field[3 * gridX + 2][3 * gridY] == opponent && field[3 * gridX][3 * gridY + 2] == opponent))   //Top right to bottom left
 						{
-							score--;
+							score-= 4;
 						}
 					}
 				}
@@ -220,86 +217,65 @@ struct board {
 		}
 		for (int y = 0; y < 3; ++y)
 		{
-			if ((macroboard[0][y] == player && macroboard[1][y] == player && (macroboard[2][y] == 0 || macroboard[2][y] == -1)) || //X|X|_
+/*DONE*/	if ((macroboard[0][y] == player && macroboard[1][y] == player && (macroboard[2][y] == 0 || macroboard[2][y] == -1)) || //X|X|_
 				(macroboard[0][y] == player && (macroboard[1][y] == 0 || macroboard[1][y] == -1) && macroboard[2][y] == player) || //X|_|X
 				((macroboard[0][y] == 0 || macroboard[0][y] == -1) && macroboard[1][y] == player && macroboard[2][y] == player))   //_|X|X
 			{
-				score += 10;
+				score += 20;
 			}
-			if ((macroboard[0][y] == opponent && macroboard[1][y] == opponent && (macroboard[2][y] == 0 || macroboard[2][y] == -1)) || //X|X|_
+/*DONE*/	else if ((macroboard[0][y] == opponent && macroboard[1][y] == opponent && (macroboard[2][y] == 0 || macroboard[2][y] == -1)) || //X|X|_
 				(macroboard[0][y] == opponent && (macroboard[1][y] == 0 || macroboard[1][y] == -1) && macroboard[2][y] == opponent) || //X|_|X
 				((macroboard[0][y] == 0 || macroboard[0][y] == -1) && macroboard[1][y] == opponent && macroboard[2][y] == opponent))   //_|X|X
 			{
-				score -= 10;
-			}
-			if ((macroboard[0][y] == player && macroboard[1][y] == player && (macroboard[2][y] == 0 || macroboard[2][y] == -1)) || //X|X|_
-				(macroboard[0][y] == player && (macroboard[1][y] == 0 || macroboard[1][y] == -1) && macroboard[2][y] == player) || //X|_|X
-				((macroboard[0][y] == 0 || macroboard[0][y] == -1) && macroboard[1][y] == player && macroboard[2][y] == player))   //_|X|X
-			{
-				score += 10;
-			}
-			if ((macroboard[0][y] == opponent && macroboard[1][y] == opponent && (macroboard[2][y] == 0 || macroboard[2][y] == -1)) || //X|X|_
-				(macroboard[0][y] == opponent && (macroboard[1][y] == 0 || macroboard[1][y] == -1) && macroboard[2][y] == opponent) || //X|_|X
-				((macroboard[0][y] == 0 || macroboard[0][y] == -1) && macroboard[1][y] == opponent && macroboard[2][y] == opponent))   //_|X|X
-			{
-				score -= 10;
+				score -= 20;
 			}
 		}
 		for (int x = 0; x < 3; ++x)
 		{
-			if ((macroboard[x][0] == player && macroboard[x][1] == player && (macroboard[x][2] == 0 || macroboard[x][2] == 0)) || //X|X|_
+/*DONE*/	if ((macroboard[x][0] == player && macroboard[x][1] == player && (macroboard[x][2] == 0 || macroboard[x][2] == -1)) || //X|X|_
 				(macroboard[x][0] == player && (macroboard[x][1] == 0 || macroboard[x][1] == -1) && macroboard[x][2] == player) || //X|_|X
 				((macroboard[x][0] == 0 || macroboard[x][0] == -1) && macroboard[x][1] == player && macroboard[x][2] == player))   //_|X|X
 			{
-				score += 10;
+				score += 20;
 			}
-			if ((macroboard[x][0] == opponent && macroboard[x][1] == opponent && (macroboard[x][2] == 0 || macroboard[x][2] == 0)) || //X|X|_
+/*DONE*/	else if ((macroboard[x][0] == opponent && macroboard[x][1] == opponent && (macroboard[x][2] == 0 || macroboard[x][2] == -1)) || //X|X|_
 				(macroboard[x][0] == opponent && (macroboard[x][1] == 0 || macroboard[x][1] == -1) && macroboard[x][2] == opponent) || //X|_|X
 				((macroboard[x][0] == 0 || macroboard[x][0] == -1) && macroboard[x][1] == opponent && macroboard[x][2] == opponent))   //_|X|X
 			{
-				score -= 10;
+				score -= 20;
 			}
 		}
-		if (macroboard[1][1] == player)
+		int currPlayer = macroboard[1][1];
+		if (currPlayer > 0)
 		{
-			if ((macroboard[0][0] == player && (macroboard[2][2] == 0 || macroboard[2][2] == -1)) ||
-				((macroboard[0][0] == 0 || macroboard[0][0] == -1) && macroboard[2][2] == player))
+/*DONE*/	if ((macroboard[0][0] == currPlayer && (macroboard[2][2] == 0 || macroboard[2][2] == -1)) ||
+				((macroboard[0][0] == 0 || macroboard[0][0] == -1) && macroboard[2][2] == currPlayer))
 			{
-				score += 10;
+				if (currPlayer == player)
+					score += 20;
+				else if (currPlayer == opponent)
+					score -= 20;
 			}
-			if ((macroboard[0][0] == opponent && (macroboard[2][2] == 0 || macroboard[2][2] == -1)) ||
-				((macroboard[0][0] == 0 || macroboard[0][0] == -1) && macroboard[2][2] == opponent))
+/*DONE*/	if ((macroboard[2][0] == currPlayer && (macroboard[0][2] == 0 || macroboard[0][2] == -1)) ||
+				((macroboard[2][0] == 0 || macroboard[2][0] == -1) && macroboard[0][2] == currPlayer))
 			{
-				score -= 10;
-			}
-			if ((macroboard[2][0] == player && (macroboard[0][2] == 0 || macroboard[0][2] == -1)) ||
-				((macroboard[2][0] == 0 || macroboard[2][0] == -1) && macroboard[0][2] == player))
-			{
-				score += 10;
-			}
-			if ((macroboard[2][0] == opponent && (macroboard[0][2] == 0 || macroboard[0][2] == -1)) ||
-				((macroboard[2][0] == 0 || macroboard[2][0] == -1) && macroboard[0][2] == opponent))
-			{
-				score -= 10;
+				if (currPlayer == player)
+					score += 20;
+				else if (currPlayer == opponent)
+					score -= 20;
 			}
 		}
-		else if (macroboard[1][1] == 0 || macroboard[1][1] == -1)
+		else if (currPlayer == 0 || currPlayer == -1)
 		{
-			if (macroboard[0][0] == player && macroboard[2][2] == player)
+/*DONE*/	if ((macroboard[0][0] == player && macroboard[2][2] == player) ||
+				(macroboard[2][0] == player && macroboard[0][2] == player))
 			{
-				score += 10;
+				score += 20;
 			}
-			if (macroboard[0][0] == opponent && macroboard[2][2] == opponent)
+/*DONE*/	if ((macroboard[0][0] == opponent && macroboard[2][2] == opponent) ||
+				(macroboard[2][0] == opponent && macroboard[0][2] == opponent))
 			{
-				score -= 10;
-			}
-			if (macroboard[2][0] == player && macroboard[0][2] == player)
-			{
-				score += 10;
-			}
-			if (macroboard[2][0] == opponent && macroboard[0][2] == opponent)
-			{
-				score -= 10;
+				score -= 20;
 			}
 		}
 		return score;
@@ -376,7 +352,7 @@ struct board {
 	}
 };
 
-bool evaluateInput(std::string input, settings* s, board* b, int* move)
+bool evaluateInput(std::string input, settings* s, board* b, int* move, int* timeLeft)
 {
 	if (input.compare(0, 9, "settings ") == 0)
 	{
@@ -462,6 +438,7 @@ bool evaluateInput(std::string input, settings* s, board* b, int* move)
 	else if (input.compare(0, 12, "action move ") == 0)
 	{
 		input.erase(0, 12);
+		(*timeLeft) = std::stoi(input);
 		return false;
 	}
 	else
@@ -470,11 +447,11 @@ bool evaluateInput(std::string input, settings* s, board* b, int* move)
 	}
 	return true;
 }
-
+/*
 int minimax(board* b, int currPlayer, bool maximizing, int max, int min, int depth, bool getIndex)
 {
 	bool print = false;
-	if (depth <= 0)
+	if (depth <= 0 || b->winner() != 0)
 		return b->getValue(currPlayer);
 	int best = maximizing ? INT_MIN : INT_MAX;
 	int bestMoveX = -1;
@@ -497,7 +474,19 @@ int minimax(board* b, int currPlayer, bool maximizing, int max, int min, int dep
 							newBoard->play_move(currPlayer, 3 * gridX + x, 3 * gridY + y);
 							int v = minimax(newBoard, !(currPlayer - 1) + 1, !maximizing, max, min, depth - 1, false);
 							if (getIndex && print)
-								std::cout << v;
+							{
+								if (v > 99)
+								{
+									std::cout << "MAX";
+								}
+								else if (v < -99)
+								{
+									std::cout << "MIN";
+								}
+								else {
+									std::cout << v;
+								}
+							}
 							delete newBoard;
 							if (maximizing)
 							{
@@ -538,6 +527,7 @@ int minimax(board* b, int currPlayer, bool maximizing, int max, int min, int dep
 								return best;
 							}
 							*/
+/*
 						}
 					}
 					if (getIndex && print)
@@ -558,12 +548,16 @@ int minimax(board* b, int currPlayer, bool maximizing, int max, int min, int dep
 	}
 	return best;
 }
-
-int alphaBeta(board* b, int currPlayer, bool maximizing, int alpha, int beta, int depth, bool getIndex)
+*/
+int alphaBeta(board* b, int currPlayer, int scorePlayer, bool maximizing, int alpha, int beta, int depth, bool getIndex)
 {
 	bool print = false;
-	if (depth <= 0)
-		return b->getValue(currPlayer);
+	if (print && getIndex)
+	{
+		std::cout << "Depth: " << depth << std::endl;
+	}
+	if (depth <= 0 || b->winner() != 0)
+		return b->getValue(scorePlayer);
 	int best = maximizing ? INT_MIN : INT_MAX;
 	int bestMoveX = -1;
 	int bestMoveY = -1;
@@ -583,9 +577,29 @@ int alphaBeta(board* b, int currPlayer, bool maximizing, int alpha, int beta, in
 						{
 							board* newBoard = b->copy();
 							newBoard->play_move(currPlayer, 3 * gridX + x, 3 * gridY + y);
-							int v = minimax(newBoard, !(currPlayer - 1) + 1, !maximizing, alpha, beta, depth - 1, false);
+							int v = alphaBeta(newBoard, !(currPlayer - 1) + 1, scorePlayer, !maximizing, alpha, beta, depth - 1, false);
 							if (getIndex && print)
-								std::cout << v;
+							{
+								if (v > 99)
+								{
+									std::cout << "MAX";
+								}
+								else if (v < -99)
+								{
+									std::cout << "MIN";
+								}
+								else{
+									if (v >= 0)
+									{
+										std::cout << " ";
+									}
+									if (abs(v) < 10)
+									{
+										std::cout << " ";
+									}
+									std::cout << v;
+								}
+							}
 							delete newBoard;
 							if (maximizing)
 							{
@@ -616,15 +630,27 @@ int alphaBeta(board* b, int currPlayer, bool maximizing, int alpha, int beta, in
 									bestMoveY = 3 * gridY + y;
 								}
 							}
+							
 							if (beta <= alpha)
 							{
 								if (getIndex)
 								{
+									if (print)
+										std::cout << std::endl;
 									return 9 * bestMoveY + bestMoveX;
 								}
 								return beta;
 							}
+							
 						}
+						else if (getIndex && print)
+						{
+							std::cout << "   ";
+						}
+					}
+					else if (getIndex && print)
+					{
+						std::cout << "   ";
 					}
 					if (getIndex && print)
 						std::cout << "]";
@@ -651,6 +677,9 @@ int main()
 	settings* gameSettings = new settings();
 	board* gameBoard = new board();
 	int move = 1;
+	int timeLeft = 10000;
+	int lastTime = timeLeft;
+	int depth = 5;
 	std::string line;
 	for (int y = 0; y < 9; ++y)
 	{
@@ -666,52 +695,48 @@ int main()
 			gameBoard->macroboard[x][y] = -1;
 		}
 	}
-	gameSettings->your_botid = 1;
-	
+
 	while (gameBoard->winner() == 0)
 	{
-		
 		do
 		{
 			std::getline(std::cin, line);
-		} while (evaluateInput(line, gameSettings, gameBoard, &move));
+		} while (evaluateInput(line, gameSettings, gameBoard, &move, &timeLeft));
 		
 		if (move == 1)
 		{
-			std::cout << "place_move " << rand()%9 << " " << rand()%9 << std::endl;
+			std::cout << "place_move 4 4" << std::endl;
 		}
 		else {
-		
-			int index;
-			if (move == 1)
+			depth = (int)(move / 3) + 2;
+			depth = std::min(depth, 9);
+			if (timeLeft < 8000)
 			{
-				move++;
-				index = rand() % 81;
+				depth--;
 			}
-			else {
-				index = alphaBeta(gameBoard, gameSettings->your_botid, true, INT_MIN, INT_MAX, 9, true);
-			}
+			int index = alphaBeta(gameBoard, gameSettings->your_botid, gameSettings->your_botid, true, INT_MIN, INT_MAX, depth, true);
 			int x = index % 9;
 			int y = (int)((index - x) / 9);
 			std::cout << "place_move " << x << " " << y << std::endl;
-			
 		}
 	}
 	
 	/*
 	while (gameBoard->winner() == 0)
 	{
+		std::cout << "Move: " << move << std::endl;
 		int index;
+		depth = (int)(move / 5) + 1;
 		if (move == 1)
 		{
-			move++;
 			index = rand() % 81;
 		}
 		else {
-			index = minimax(gameBoard, gameSettings->your_botid, true, INT_MIN, INT_MAX, 6, true);
+			index = alphaBeta(gameBoard, gameSettings->your_botid, gameSettings->your_botid, true, INT_MIN, INT_MAX, depth, true);
 		}
 		int x = index % 9;
 		int y = (int)((index - x) / 9);
+		
 		std::cout << "Alpha-Beta: place_move " << x << " " << y << std::endl;
 
 		gameBoard->play_move(gameSettings->your_botid, x, y);
@@ -745,7 +770,9 @@ int main()
 				std::cout << (char)196 << (char)196 << (char)196 << (char)197 << (char)196 << (char)196 << (char)196 << (char)197 << (char)196 << (char)196 << (char)196 << std::endl;
 		}
 		std::cout << std::endl;
+		std::cout << "Score: " << gameBoard->getValue(gameSettings->your_botid) << std::endl << "---------" << std::endl;
 		gameSettings->your_botid = !(gameSettings->your_botid - 1) + 1;
+		move++;
 	}
 	std::cout << gameBoard->winner() << " Wins!";
 	*/
