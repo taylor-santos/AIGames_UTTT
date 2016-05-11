@@ -68,7 +68,7 @@ struct board {
 		{
 			for (int x = 0; x < 3; ++x)
 			{
-				if (macroboard[x][y] <= 0)
+				if (macroboard[x][y] != -2 && macroboard[x][y] != 1 && macroboard[x][y] != 2)
 					return 0;
 			}
 		}
@@ -115,11 +115,11 @@ struct board {
 			{
 /*DONE*/		if (macroboard[gridX][gridY] == player)
 				{
-					score += 10;
+					score += 20;
 				}
 /*DONE*/		else if (macroboard[gridX][gridY] == opponent)
 				{
-					score -= 10;
+					score -= 20;
 				}
 				else if (macroboard[gridX][gridY] == 0 || macroboard[gridX][gridY] == -1)
 				{
@@ -551,16 +551,27 @@ int minimax(board* b, int currPlayer, bool maximizing, int max, int min, int dep
 */
 int alphaBeta(board* b, int currPlayer, int scorePlayer, bool maximizing, int alpha, int beta, int depth, bool getIndex)
 {
-	bool print = false;
+	bool print = true;
 	if (print && getIndex)
 	{
-		std::cout << "Depth: " << depth << std::endl;
+		std::cerr << "Depth: " << depth << std::endl;
 	}
 	if (depth <= 0 || b->winner() != 0)
 		return b->getValue(scorePlayer);
 	int best = maximizing ? INT_MIN : INT_MAX;
 	int bestMoveX = -1;
 	int bestMoveY = -1;
+	int gridCount = 0;
+	for (int gridY = 0; gridY < 3; ++gridY)
+	{
+		for (int gridX = 0; gridX < 3; ++gridX)
+		{
+			if (b->macroboard[gridX][gridY] == -1)
+			{
+				gridCount++;
+			}
+		}
+	}
 	for (int gridY = 0; gridY < 3; ++gridY)
 	{
 		for (int y = 0; y < 3; ++y)
@@ -570,34 +581,37 @@ int alphaBeta(board* b, int currPlayer, int scorePlayer, bool maximizing, int al
 				for (int x = 0; x < 3; ++x)
 				{
 					if (getIndex && print)
-						std::cout << "[";
+						std::cerr << "[";
 					if (b->field[3 * gridX + x][3 * gridY + y] == 0)
 					{
 						if (b->macroboard[gridX][gridY] == -1)
 						{
 							board* newBoard = b->copy();
 							newBoard->play_move(currPlayer, 3 * gridX + x, 3 * gridY + y);
-							int v = alphaBeta(newBoard, !(currPlayer - 1) + 1, scorePlayer, !maximizing, alpha, beta, depth - 1, false);
+							int tempDepth = depth;
+							if (newBoard->macroboard[gridX][gridY] == currPlayer && gridCount <= 3)
+								tempDepth++;
+							int v = alphaBeta(newBoard, !(currPlayer - 1) + 1, scorePlayer, !maximizing, alpha, beta, tempDepth - 1, false);
 							if (getIndex && print)
 							{
 								if (v > 99)
 								{
-									std::cout << "MAX";
+									std::cerr << "MAX";
 								}
 								else if (v < -99)
 								{
-									std::cout << "MIN";
+									std::cerr << "MIN";
 								}
 								else{
 									if (v >= 0)
 									{
-										std::cout << " ";
+										std::cerr << " ";
 									}
 									if (abs(v) < 10)
 									{
-										std::cout << " ";
+										std::cerr << " ";
 									}
-									std::cout << v;
+									std::cerr << v;
 								}
 							}
 							delete newBoard;
@@ -636,7 +650,11 @@ int alphaBeta(board* b, int currPlayer, int scorePlayer, bool maximizing, int al
 								if (getIndex)
 								{
 									if (print)
-										std::cout << std::endl;
+										std::cerr << std::endl;
+									if (best == INT_MIN)
+									{
+										std::cerr << "no_moves" << std::endl;
+									}
 									return 9 * bestMoveY + bestMoveX;
 								}
 								return beta;
@@ -645,27 +663,31 @@ int alphaBeta(board* b, int currPlayer, int scorePlayer, bool maximizing, int al
 						}
 						else if (getIndex && print)
 						{
-							std::cout << "   ";
+							std::cerr << "   ";
 						}
 					}
 					else if (getIndex && print)
 					{
-						std::cout << "   ";
+						std::cerr << "   ";
 					}
 					if (getIndex && print)
-						std::cout << "]";
+						std::cerr << "]";
 				}
 				if (getIndex && print)
-					std::cout << " ";
+					std::cerr << " ";
 			}
 			if (getIndex && print)
-				std::cout << std::endl;
+				std::cerr << std::endl;
 		}
 		if (getIndex && print)
-			std::cout << std::endl;
+			std::cerr << std::endl;
 	}
 	if (getIndex)
 	{
+		if (best == INT_MIN)
+		{
+			std::cout << "no_moves" << std::endl;
+		}
 		return 9 * bestMoveY + bestMoveX;
 	}
 	return best;
@@ -698,18 +720,21 @@ int main()
 
 	while (gameBoard->winner() == 0)
 	{
+		
 		do
 		{
 			std::getline(std::cin, line);
 		} while (evaluateInput(line, gameSettings, gameBoard, &move, &timeLeft));
 		
+		std::cerr << "Move: " << move << std::endl;
+
 		if (move == 1)
 		{
 			std::cout << "place_move 4 4" << std::endl;
 		}
 		else {
 			depth = (int)(move / 3) + 2;
-			depth = std::min(depth, 9);
+			depth = std::min(depth, 8);
 			if (timeLeft < 8000)
 			{
 				depth--;
@@ -718,6 +743,37 @@ int main()
 			int x = index % 9;
 			int y = (int)((index - x) / 9);
 			std::cout << "place_move " << x << " " << y << std::endl;
+			for (int gridY = 0; gridY < 3; ++gridY)
+			{
+				for (int y = 0; y < 3; ++y)
+				{
+					for (int gridX = 0; gridX < 3; ++gridX)
+					{
+						for (int x = 0; x < 3; ++x)
+						{
+							switch (gameBoard->field[3 * gridX + x][3 * gridY + y])
+							{
+							case 1:
+								std::cerr << "X";
+								break;
+							case 2:
+								std::cerr << "O";
+								break;
+							default:
+								std::cerr << " ";
+								break;
+							}
+						}
+						if (gridX != 2)
+							std::cerr << "|";
+					}
+					std::cerr << std::endl;
+				}
+				if (gridY != 2)
+					std::cerr << "---+---+---" << std::endl;
+			}
+			std::cerr << std::endl;
+			std::cerr << "Score: " << gameBoard->getValue(gameSettings->your_botid) << std::endl << "---------" << std::endl;
 		}
 	}
 	
