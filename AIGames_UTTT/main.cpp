@@ -6,7 +6,9 @@
 #include <cstring>
 #include <ctime>
 #include <vector>
+#include <list>
 #include <iomanip>
+#include <functional>
 
 #define INT_MAX 2147483647
 #define INT_MIN -2147483647
@@ -27,6 +29,33 @@ struct board {
 		std::memcpy(&(newBoard->field)[0][0], &field[0][0], sizeof(int) * 9 * 9);
 		std::memcpy(&(newBoard->macroboard)[0][0], &macroboard[0][0], sizeof(int) * 3 * 3);
 		return newBoard;
+	}
+
+	std::list<board*> getChildren(int player)
+	{
+		std::list<board*> children;
+		for (int gridY = 0; gridY < 3; ++gridY)
+		{
+			for (int gridX = 0; gridX < 3; ++gridX)
+			{
+				if (macroboard[gridX][gridY] == -1)
+				{
+					for (int y = 0; y < 3; ++y)
+					{
+						for (int x = 0; x < 3; ++x)
+						{
+							if (field[3 * gridX + x][3 * gridY + y] == 0)
+							{
+								board* newBoard = this->copy();
+								newBoard->play_move(player, 3 * gridX + x, 3 * gridY + y);
+								children.push_back(newBoard);
+							}
+						}
+					}
+				}
+			}
+		}
+		return children;
 	}
 
 	int winner()
@@ -407,6 +436,71 @@ struct board {
 	}
 };
 
+struct hashEntry
+{
+	size_t board_hash;
+	int upperBound;
+	int lowerBound;
+	hashEntry(board* b)
+	{
+		std::hash<std::string> hasher;
+		std::string newField;
+		for (int y = 0; y < 9; ++y)
+		{
+			for (int x = 0; x < 9; ++x)
+			{
+				newField += b->field[x][y];
+			}
+		}
+		board_hash = hasher(newField);
+	}
+};
+
+struct hashTable {
+	std::list<hashEntry*> table;
+
+	hashEntry* retrieve(board* b)
+	{
+
+		std::hash<std::string> hasher;
+		std::string newField;
+		for (int y = 0; y < 9; ++y)
+		{
+			for (int x = 0; x < 9; ++x)
+			{
+				newField += b->field[x][y];
+			}
+		}
+		size_t hash = hasher(newField);
+		std::list<hashEntry*>::iterator i = table.begin();
+		while (i != table.end())
+		{
+			if ((*i)->board_hash == hash)
+			{
+				hashEntry* retrievedHash = (*i);
+				table.erase(i);
+				table.push_front(retrievedHash);
+				return retrievedHash;
+			}
+			i++;
+		}
+		return NULL;
+	}
+
+	hashEntry* store(board* b)
+	{
+		hashEntry* newEntry = retrieve(b);
+		if (newEntry == NULL)
+		{
+			newEntry = new hashEntry(b);
+			newEntry->lowerBound = INT_MIN;
+			newEntry->upperBound = INT_MAX;
+			table.push_front(newEntry);
+		}
+		return newEntry;
+	}
+};
+
 bool evaluateInput(std::string input, settings* s, board* b, int* move, int* timeLeft)
 {
 	if (input.compare(0, 9, "settings ") == 0)
@@ -684,6 +778,100 @@ int alphaBeta(board* b, int currPlayer, int scorePlayer, bool maximizing, int al
 	return best;
 }
 
+int alphaBetaWithMemory(hashTable* hash_table, board* b, int currPlayer, int scorePlayer, bool maximizing, int alpha, int beta, int depth)
+{
+	hashEntry* board_hash = hash_table->retrieve(b);
+	if (board_hash != NULL)
+	{
+		if (board_hash->lowerBound >= beta)
+			return board_hash->lowerBound;
+		if (board_hash->upperBound <= alpha)
+			return board_hash->upperBound;
+		alpha = std::max(alpha, board_hash->lowerBound);
+		beta = std::min(beta, board_hash->upperBound);
+	}
+	int g;
+	std::list<board*> children = b->getChildren(currPlayer);
+	std::list<board*>::iterator c = children.begin();
+	if (depth == 0 || b->winner() != 0)
+	{
+		g = b->getValue(scorePlayer);
+	}
+	else if (maximizing)
+	{
+		g = INT_MIN;
+		int newAlpha = alpha;
+		while (g < beta && c != children.end())
+		{
+			g = std::max(g, alphaBetaWithMemory(hash_table, *c, !(currPlayer - 1) + 1, scorePlayer, !maximizing, newAlpha, beta, depth - 1));
+			newAlpha = std::max(newAlpha, g);
+			c++;
+		}
+	}
+	else {
+		g = INT_MAX;
+		int newBeta = beta;
+		while (g > alpha && c != children.end())
+		{
+			g = std::min(g, alphaBetaWithMemory(hash_table, *c, !(currPlayer - 1) + 1, scorePlayer, !maximizing, alpha, newBeta, depth - 1));
+			newBeta = std::min(g, newBeta);
+			c++;
+		}
+	}
+	hashEntry* newEntry = hash_table->store(b);
+	if (g <= alpha)
+	{
+		newEntry->upperBound = g;
+	}
+	if (g > alpha && g < beta)
+	{
+		newEntry->lowerBound = g;
+		newEntry->upperBound = g;
+	}
+	if (g >= beta)
+	{
+		newEntry->lowerBound = g;
+	}
+	return g;
+}
+
+int MTDF(board* b, int currPlayer, int firstGuess, int depth)
+{
+	int g = firstGuess;
+	int upperBound = INT_MAX;
+	int lowerBound = INT_MIN;
+	
+	do
+	{
+		int beta;
+		if (g == lowerBound)
+			beta = g + 1;
+		else
+			beta = g;
+		hashTable* hash_table = new hashTable();
+		g = alphaBetaWithMemory(hash_table, b, currPlayer, currPlayer, true, beta - 1, beta, depth);
+		delete hash_table;
+		if (g < beta)
+			upperBound = g;
+		else
+			lowerBound = g;
+	} while (lowerBound < upperBound);
+	return g;
+}
+
+int iterative_deepening(board* b, int currPlayer, int time)
+{
+	int start_time = clock();
+	int firstGuess = 0;
+	for (int d = 1; d < 12; ++d)
+	{
+		firstGuess = MTDF(b, currPlayer, firstGuess, d);
+		if ((clock() - start_time) / double(CLOCKS_PER_SEC) * 1000 >= time)
+			break;
+	}
+	return firstGuess;
+}
+
 int main()
 {
 	settings* gameSettings = new settings();
@@ -749,6 +937,7 @@ int main()
 			int originalCount = count;
 			int totalCount = 0;
 			int startT = clock();
+			int score = MTDF(gameBoard, gameSettings->your_botid, 0, 9);
 			int index = alphaBeta(gameBoard, gameSettings->your_botid, gameSettings->your_botid, true, INT_MIN, INT_MAX, &count, &totalCount, true, clock());
 			int stopT = clock();
 			int x = index % 9;
