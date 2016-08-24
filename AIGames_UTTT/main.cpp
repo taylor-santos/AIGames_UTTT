@@ -26,8 +26,8 @@ struct board {
 	board* copy()
 	{
 		board* newBoard = new board();
-		std::memcpy(&(newBoard->field)[0][0], &field[0][0], sizeof(int) * 9 * 9);
-		std::memcpy(&(newBoard->macroboard)[0][0], &macroboard[0][0], sizeof(int) * 3 * 3);
+		std::memcpy(newBoard->field, field, sizeof(int) * 9 * 9);
+		std::memcpy(newBoard->macroboard, macroboard, sizeof(int) * 3 * 3);
 		return newBoard;
 	}
 
@@ -60,45 +60,39 @@ struct board {
 
 	int winner()
 	{
-		for (int y = 0; y < 3; ++y)
-		{
-			int player = macroboard[0][y];
-			if (player > 0)
-			{
-				if (macroboard[1][y] == player && macroboard[2][y] == player)
-				{
-					return player;
-				}
-			}
-		}
-		for (int x = 0; x < 3; ++x)
-		{
-			int player = macroboard[x][0];
-			if (player > 0)
-			{
-				if (macroboard[x][1] == player && macroboard[x][2] == player)
-				{
-					return player;
-				}
-			}
-		}
 		int player = macroboard[1][1];
 		if (player > 0)
 		{
-			if (macroboard[0][0] == player && macroboard[2][2] == player)
-			{
+			if (player == macroboard[0][0] && player == macroboard[2][2])
 				return player;
-			}
-			if (macroboard[2][0] == player && macroboard[0][2] == player)
-			{
+			if (player == macroboard[2][0] && player == macroboard[0][2])
 				return player;
-			}
+			if (player == macroboard[0][1] && player == macroboard[2][1])
+				return player;
+			if (player == macroboard[1][0] && player == macroboard[1][2])
+				return player;
+		}
+		player = macroboard[0][0];
+		if (player > 0)
+		{
+			if (player == macroboard[1][0] && player == macroboard[2][0])
+				return player;
+			if (player == macroboard[0][1] && player == macroboard[0][2])
+				return player;
+		}
+		player = macroboard[2][2];
+		if (player > 0)
+		{
+			if (player == macroboard[2][1] && player == macroboard[2][0])
+				return player;
+			if (player == macroboard[1][2] && player == macroboard[0][2])
+				return player;
 		}
 		for (int y = 0; y < 3; ++y)
 		{
 			for (int x = 0; x < 3; ++x)
 			{
-				if (macroboard[x][y] != -2 && macroboard[x][y] != 1 && macroboard[x][y] != 2)
+				if (macroboard[x][y] == -1 || macroboard[x][y] == 0)
 					return 0;
 			}
 		}
@@ -143,41 +137,66 @@ struct board {
 		{
 			for (int gridX = 0; gridX < 3; ++gridX)
 			{
-				for (int y = 0; y < 3; ++y) //Horizontal
+				if (macroboard[gridX][gridY] == 0 || macroboard[gridX][gridY] == -1)
 				{
+					for (int y = 0; y < 3; ++y) //Horizontal
+					{
+						int playerCount = 0;
+						int opponentCount = 0;
+						for (int x = 0; x < 3; ++x)
+						{
+							if (field[3 * gridX + x][3 * gridY + y] == player)
+							{
+								playerCount++;
+							}
+							else if (field[3 * gridX + x][3 * gridY + y] == opponent)
+							{
+								opponentCount++;
+							}
+						}
+						if (opponentCount == 0)
+						{
+							score += pow(playerCount, 2);
+						}
+						else if (playerCount == 0)
+						{
+							score -= pow(opponentCount, 2);
+						}
+					}
+					for (int x = 0; x < 3; ++x) //Vertical
+					{
+						int playerCount = 0;
+						int opponentCount = 0;
+						for (int y = 0; y < 3; ++y)
+						{
+							if (field[3 * gridX + x][3 * gridY + y] == player)
+							{
+								playerCount++;
+							}
+							else if (field[3 * gridX + x][3 * gridY + y] == opponent)
+							{
+								opponentCount++;
+							}
+						}
+						if (opponentCount == 0)
+						{
+							score += pow(playerCount, 2);
+						}
+						else if (playerCount == 0)
+						{
+							score -= pow(opponentCount, 2);
+						}
+					}
 					int playerCount = 0;
 					int opponentCount = 0;
-					for (int x = 0; x < 3; ++x)
+					//Top-Left to Bottom-Right Diagonal
+					for (int i = 0; i < 3; ++i)
 					{
-						if (field[3*gridX+x][3*gridY+y] == player)
+						if (field[3 * gridX + i][3 * gridY + i] == player)
 						{
 							playerCount++;
 						}
-						else if (field[3 * gridX + x][3 * gridY + y] == opponent)
-						{
-							opponentCount++;
-						}
-					}
-					if (opponentCount == 0)
-					{
-						score += pow(playerCount,2);
-					}
-					else if (playerCount == 0)
-					{
-						score -= pow(opponentCount,2);
-					}
-				}
-				for (int x = 0; x < 3; ++x) //Vertical
-				{
-					int playerCount = 0;
-					int opponentCount = 0;
-					for (int y = 0; y < 3; ++y)
-					{
-						if (field[3 * gridX + x][3 * gridY + y] == player)
-						{
-							playerCount++;
-						}
-						else if (field[3 * gridX + x][3 * gridY + y] == opponent)
+						else if (field[3 * gridX + i][3 * gridY + i] == opponent)
 						{
 							opponentCount++;
 						}
@@ -190,50 +209,28 @@ struct board {
 					{
 						score -= pow(opponentCount, 2);
 					}
-				}
-				int playerCount = 0;
-				int opponentCount = 0;
-				//Top-Left to Bottom-Right Diagonal
-				for (int i = 0; i < 3; ++i)
-				{
-					if (field[3 * gridX + i][3 * gridY + i] == player)
+					playerCount = 0;
+					opponentCount = 0;
+					//Top-Right to Bottom-Left Diagonal
+					for (int i = 0; i < 3; ++i)
 					{
-						playerCount++;
+						if (field[3 * gridX + 2 - i][3 * gridY + i] == player)
+						{
+							playerCount++;
+						}
+						else if (field[3 * gridX + 2 - i][3 * gridY + i] == opponent)
+						{
+							opponentCount++;
+						}
 					}
-					else if (field[3 * gridX + i][3 * gridY + i] == opponent)
+					if (opponentCount == 0)
 					{
-						opponentCount++;
+						score += pow(playerCount, 2);
 					}
-				}
-				if (opponentCount == 0)
-				{
-					score += pow(playerCount, 2);
-				}
-				else if (playerCount == 0)
-				{
-					score -= pow(opponentCount, 2);
-				}
-				playerCount = 0;
-				opponentCount = 0;
-				//Top-Right to Bottom-Left Diagonal
-				for (int i = 0; i < 3; ++i)
-				{
-					if (field[3 * gridX + 2 - i][3 * gridY + i] == player)
+					else if (playerCount == 0)
 					{
-						playerCount++;
+						score -= pow(opponentCount, 2);
 					}
-					else if (field[3 * gridX + 2 - i][3 * gridY + i] == opponent)
-					{
-						opponentCount++;
-					}
-				}
-				if (opponentCount == 0)
-				{
-					score += pow(playerCount, 2);
-				}
-				else if (playerCount == 0)
-				{
-					score -= pow(opponentCount, 2);
 				}
 			}
 		}
@@ -261,11 +258,11 @@ struct board {
 			{
 				if (opponentCount == 0)
 				{
-					score += 25 * playerCount;
+					score += 25 * pow(playerCount, 2);
 				}
 				else if (playerCount == 0)
 				{
-					score -= 25 * opponentCount;
+					score -= 25 * pow(opponentCount, 2);
 				}
 			}
 		}
@@ -293,11 +290,11 @@ struct board {
 			{
 				if (opponentCount == 0)
 				{
-					score += 25 * playerCount;
+					score += 25 * pow(playerCount, 2);
 				}
 				else if (playerCount == 0)
 				{
-					score -= 25 * opponentCount;
+					score -= 25 * pow(opponentCount, 2);
 				}
 			}
 		}
@@ -324,11 +321,11 @@ struct board {
 		{
 			if (opponentCount == 0)
 			{
-				score += 25 * playerCount;
+				score += 25 * pow(playerCount, 2);
 			}
 			else if (playerCount == 0)
 			{
-				score -= 25 * opponentCount;
+				score -= 25 * pow(opponentCount, 2);
 			}
 		}
 
@@ -355,11 +352,11 @@ struct board {
 		{
 			if (opponentCount == 0)
 			{
-				score += 25 * playerCount;
+				score += 25 * pow(playerCount, 2);
 			}
 			else if (playerCount == 0)
 			{
-				score -= 25 * opponentCount;
+				score -= 25 * pow(opponentCount, 2);
 			}
 		}
 		return score;
@@ -436,72 +433,48 @@ struct board {
 	}
 };
 
-struct hashEntry
-{
-	size_t board_hash;
-	int upperBound;
-	int lowerBound;
-	hashEntry(board* b)
+struct move {
+	int x;
+	int y;
+	bool bestMove = false;
+	int player;
+	int score;
+	std::list<move*> nextMoves;
+	move* getNextMove(int x, int y)
 	{
-		std::hash<std::string> hasher;
-		std::string newField;
-		for (int y = 0; y < 9; ++y)
+		std::list<move*>::iterator i = nextMoves.begin();
+		while (i != nextMoves.end())
 		{
-			for (int x = 0; x < 9; ++x)
-			{
-				newField += b->field[x][y];
-			}
-		}
-		board_hash = hasher(newField);
-	}
-};
-
-struct hashTable {
-	std::list<hashEntry*> table;
-
-	hashEntry* retrieve(board* b)
-	{
-
-		std::hash<std::string> hasher;
-		std::string newField;
-		for (int y = 0; y < 9; ++y)
-		{
-			for (int x = 0; x < 9; ++x)
-			{
-				newField += b->field[x][y];
-			}
-		}
-		size_t hash = hasher(newField);
-		std::list<hashEntry*>::iterator i = table.begin();
-		while (i != table.end())
-		{
-			if ((*i)->board_hash == hash)
-			{
-				hashEntry* retrievedHash = (*i);
-				table.erase(i);
-				table.push_front(retrievedHash);
-				return retrievedHash;
-			}
+			if ((*i)->x == x && (*i)->y == y)
+				return (*i);
 			i++;
 		}
 		return NULL;
 	}
-
-	hashEntry* store(board* b)
+	int getBestIndex()
 	{
-		hashEntry* newEntry = retrieve(b);
-		if (newEntry == NULL)
+		std::list<move*>::iterator i = nextMoves.begin();
+		while (i != nextMoves.end())
 		{
-			newEntry = new hashEntry(b);
-			newEntry->lowerBound = INT_MIN;
-			newEntry->upperBound = INT_MAX;
-			table.push_front(newEntry);
+			if ((*i)->bestMove)
+			{
+				return 9 * (*i)->y + (*i)->x;
+			}
+			i++;
 		}
-		return newEntry;
+		return -1;
+	}
+	~move()
+	{
+		while (!nextMoves.empty())
+		{
+			delete nextMoves.front();
+			nextMoves.pop_front();
+		}
 	}
 };
 
-bool evaluateInput(std::string input, settings* s, board* b, int* move, int* timeLeft)
+bool evaluateInput(std::string input, settings* s, board* b, int* move, int* timeLeft, int* round)
 {
 	if (input.compare(0, 9, "settings ") == 0)
 	{
@@ -544,7 +517,7 @@ bool evaluateInput(std::string input, settings* s, board* b, int* move, int* tim
 		if (input.compare(0, 6, "round ") == 0)
 		{
 			input.erase(0, 6);
-			
+			(*round) = std::stoi(input);
 		}
 		else if (input.compare(0, 5, "move ") == 0)
 		{
@@ -597,7 +570,7 @@ bool evaluateInput(std::string input, settings* s, board* b, int* move, int* tim
 	return true;
 }
 
-int alphaBeta(board* b, int currPlayer, int scorePlayer, bool maximizing, int alpha, int beta, int* count, int* totalCount, bool getIndex, int startTime)
+int alphaBeta(board* b, int firstMove, char* bestMove, char bestMoves[81], int currDepth, int currPlayer, int scorePlayer, bool maximizing, int alpha, int beta, int* count, int* totalCount, bool getIndex, int startTime)
 {
 	bool print = true;
 	if ((*count) <= 1|| b->winner() != 0)
@@ -631,6 +604,117 @@ int alphaBeta(board* b, int currPlayer, int scorePlayer, bool maximizing, int al
 			}
 		}
 	}
+	if ((int)firstMove >= 0)
+	{
+		int y = (int)firstMove / 9;
+		int x = (int)firstMove % 9;
+		int gridX = x / 3;
+		int gridY = y / 3;
+		x = x % 3;
+		y = y % 3;
+
+		board* newBoard = b->copy();
+		newBoard->play_move(currPlayer, 3 * gridX + x, 3 * gridY + y);
+		int nextCount = (int)round(*count / playCount);
+		if (nextCount == 0)
+		{
+			nextCount = 1;
+		}
+		if (newBoard->macroboard[gridX][gridY] == currPlayer && gridCount <= 2)
+		{
+			nextCount *= 2;
+		}
+		(*count) -= nextCount;
+		char newBestMove;
+		char* newBestMoves = NULL;
+		if (currDepth == 0)
+		{
+			newBestMoves = (char*)malloc(sizeof(char) * 81);
+			for (int i = 0; i < 81; ++i)
+			{
+				newBestMoves[i] = -1;
+			}
+		}
+		int v = alphaBeta(newBoard, -1, &newBestMove, newBestMoves, currDepth + 1, !(currPlayer - 1) + 1, scorePlayer, !maximizing, alpha, beta, &nextCount, totalCount, false, startTime);
+		(*count) += nextCount;
+		playCount--;
+
+		if (currDepth == 1)
+		{
+			bestMoves[9 * (3 * gridY + y) + 3 * gridX + x] = newBestMove;
+		}
+
+		if (getIndex && print)
+		{
+			std::cerr << "First guess score: " << v << std::endl;
+		}
+		delete newBoard;
+		if (maximizing)
+		{
+			if (currDepth == 2 && v > best)
+			{
+				*bestMove = 9 * (3 * gridY + y) + 3 * gridX + x;
+			}
+			if (currDepth == 0 && v > best && bestMoves != NULL)
+			{
+				std::memcpy(bestMoves, newBestMoves, sizeof(char[81]));
+			}
+			if (getIndex && v > best)
+			{
+				bestMoveX = 3 * gridX + x;
+				bestMoveY = 3 * gridY + y;
+			}
+			if (v == INT_MAX && getIndex)
+			{
+				bestMoveX = 3 * gridX + x;
+				bestMoveY = 3 * gridY + y;
+			}
+			best = std::max(best, v);
+			alpha = std::max(alpha, best);
+			if (best == INT_MIN && getIndex)
+			{
+				bestMoveX = 3 * gridX + x;
+				bestMoveY = 3 * gridY + y;
+			}
+		}
+		else {
+			if (currDepth == 2 && v < best)
+			{
+				*bestMove = 9 * (3 * gridY + y) + 3 * gridX + x;
+			}
+			if (currDepth == 0 && v < best && bestMoves != NULL)
+			{
+				std::memcpy(bestMoves, newBestMoves, sizeof(bestMoves));
+			}
+			if (getIndex && v < best)
+			{
+				bestMoveX = 3 * gridX + x;
+				bestMoveY = 3 * gridY + y;
+			}
+			if (v == INT_MIN && getIndex)
+			{
+				bestMoveX = 3 * gridX + x;
+				bestMoveY = 3 * gridY + y;
+			}
+			best = std::min(best, v);
+			beta = std::min(beta, best);
+			if (best == INT_MAX && getIndex)
+			{
+				bestMoveX = 3 * gridX + x;
+				bestMoveY = 3 * gridY + y;
+			}
+		}
+
+		if (beta <= alpha)
+		{
+			if (getIndex)
+			{
+				std::cerr << std::endl;
+				return 9 * bestMoveY + bestMoveX;
+			}
+			return beta;
+		}
+	}
 	for (int gridY = 0; gridY < 3; ++gridY)
 	{
 		for (int y = 0; y < 3; ++y)
@@ -645,102 +729,142 @@ int alphaBeta(board* b, int currPlayer, int scorePlayer, bool maximizing, int al
 					{
 						if (b->field[3 * gridX + x][3 * gridY + y] == 0)
 						{
-							board* newBoard = b->copy();
-							newBoard->play_move(currPlayer, 3 * gridX + x, 3 * gridY + y);
-							int nextCount = (int)round(*count / playCount);
-							if (nextCount == 0)
+							if (9 * (3 * gridY + y) + 3 * gridX + x != firstMove)
 							{
-								nextCount = 1;
-							}
-							if (newBoard->macroboard[gridX][gridY] == currPlayer && gridCount <= 2)
-							{
-								nextCount *= 2;
-							}
-							(*count) -= nextCount;
-							int v = alphaBeta(newBoard, !(currPlayer - 1) + 1, scorePlayer, !maximizing, alpha, beta, &nextCount, totalCount, false, startTime);
-							(*count) += nextCount;
-							playCount--;
-							if (getIndex && print)
-							{
-								if (v > 9999)
+								board* newBoard = b->copy();
+								newBoard->play_move(currPlayer, 3 * gridX + x, 3 * gridY + y);
+								int nextCount = (int)round(*count / playCount);
+								if (nextCount == 0)
 								{
-									std::cerr << " MAX";
+									nextCount = 1;
 								}
-								else if (v < -999)
+								if (newBoard->macroboard[gridX][gridY] == currPlayer && gridCount <= 2)
 								{
-									std::cerr << " MIN";
+									nextCount *= 2;
 								}
-								else{
-									if (v >= 0 && v < 10000)
+								(*count) -= nextCount;
+								char newBestMove;
+								char* newBestMoves = NULL;
+								if (currDepth == 0)
+								{
+									newBestMoves = (char*)malloc(sizeof(char) * 81);
+									for (int i = 0; i < 81; ++i)
 									{
-										std::cerr << " ";
+										newBestMoves[i] = -1;
 									}
-									if (abs(v) < 100)
+								}
+								int v = alphaBeta(newBoard, -1, &newBestMove, newBestMoves, currDepth + 1, !(currPlayer - 1) + 1, scorePlayer, !maximizing, alpha, beta, &nextCount, totalCount, false, startTime);
+								(*count) += nextCount;
+								playCount--;
+
+								if (currDepth == 1)
+								{
+									bestMoves[9 * (3 * gridY + y) + 3 * gridX + x] = newBestMove;
+								}
+
+								if (getIndex && print)
+								{
+									if (v > 9999)
 									{
-										std::cerr << " ";
+										std::cerr << " MAX";
 									}
-									if (abs(v) < 10)
+									else if (v < -999)
 									{
-										std::cerr << " ";
+										std::cerr << " MIN";
 									}
-									if (v < -999)
-										std::cerr << "-999";
-									else
-										std::cerr << v;
-									std::cerr << "]" << std::setfill('0') << std::setw(4) << (int)((clock() - startTime) / double(CLOCKS_PER_SEC) * 1000) << " ";
+									else {
+										if (v >= 0 && v < 10000)
+										{
+											std::cerr << " ";
+										}
+										if (abs(v) < 100)
+										{
+											std::cerr << " ";
+										}
+										if (abs(v) < 10)
+										{
+											std::cerr << " ";
+										}
+										if (v < -999)
+											std::cerr << "-999";
+										else
+											std::cerr << v;
+										std::cerr << "]" << std::setfill('0') << std::setw(4) << (int)((clock() - startTime) / double(CLOCKS_PER_SEC) * 1000) << " ";
+									}
 								}
-							}
-							delete newBoard;
-							if (maximizing)
-							{
-								if (getIndex && v > best)
+								delete newBoard;
+								if (maximizing)
 								{
-									bestMoveX = 3 * gridX + x;
-									bestMoveY = 3 * gridY + y;
+									if (currDepth == 2 && v > best)
+									{
+										*bestMove = 9 * (3 * gridY + y) + 3 * gridX + x;
+									}
+									if (currDepth == 0 && v > best && bestMoves != NULL)
+									{
+										std::memcpy(bestMoves, newBestMoves, sizeof(char[81]));
+									}
+									if (getIndex && v > best)
+									{
+										bestMoveX = 3 * gridX + x;
+										bestMoveY = 3 * gridY + y;
+									}
+									if (v == INT_MAX && getIndex)
+									{
+										bestMoveX = 3 * gridX + x;
+										bestMoveY = 3 * gridY + y;
+									}
+									best = std::max(best, v);
+									alpha = std::max(alpha, best);
+									if (best == INT_MIN && getIndex)
+									{
+										bestMoveX = 3 * gridX + x;
+										bestMoveY = 3 * gridY + y;
+									}
 								}
-								if (v == INT_MAX && getIndex)
-								{
-									bestMoveX = 3 * gridX + x;
-									bestMoveY = 3 * gridY + y;
+								else {
+									if (currDepth == 2 && v < best)
+									{
+										*bestMove = 9 * (3 * gridY + y) + 3 * gridX + x;
+									}
+									if (currDepth == 0 && v < best && bestMoves != NULL)
+									{
+										std::memcpy(bestMoves, newBestMoves, sizeof(bestMoves));
+									}
+									if (getIndex && v < best)
+									{
+										bestMoveX = 3 * gridX + x;
+										bestMoveY = 3 * gridY + y;
+									}
+									if (v == INT_MIN && getIndex)
+									{
+										bestMoveX = 3 * gridX + x;
+										bestMoveY = 3 * gridY + y;
+									}
+									best = std::min(best, v);
+									beta = std::min(beta, best);
+									if (best == INT_MAX && getIndex)
+									{
+										bestMoveX = 3 * gridX + x;
+										bestMoveY = 3 * gridY + y;
+									}
 								}
-								best = std::max(best, v);
-								alpha = std::max(alpha, best);
-								if (best == INT_MIN && getIndex)
+
+								if (beta <= alpha)
 								{
-									bestMoveX = 3 * gridX + x;
-									bestMoveY = 3 * gridY + y;
+									if (getIndex)
+									{
+										std::cerr << std::endl;
+										return 9 * bestMoveY + bestMoveX;
+									}
+									return beta;
 								}
 							}
 							else {
-								if (getIndex && v < best)
+								if (getIndex && print)
 								{
-									bestMoveX = 3 * gridX + x;
-									bestMoveY = 3 * gridY + y;
-								}
-								if (v == INT_MIN && getIndex)
-								{
-									bestMoveX = 3 * gridX + x;
-									bestMoveY = 3 * gridY + y;
-								}
-								best = std::min(best, v);
-								beta = std::min(beta, best);
-								if (best == INT_MAX && getIndex)
-								{
-									bestMoveX = 3 * gridX + x;
-									bestMoveY = 3 * gridY + y;
+									std::cerr << "STRT]     ";
 								}
 							}
-							
-							if (beta <= alpha)
-							{
-								if (getIndex)
-								{
-									std::cerr << std::endl;
-									return 9*bestMoveY + bestMoveX;
-								}
-								return beta;
-							}
-							
 						}
 						else if (getIndex && print)
 						{
@@ -778,108 +902,225 @@ int alphaBeta(board* b, int currPlayer, int scorePlayer, bool maximizing, int al
 	return best;
 }
 
-int alphaBetaWithMemory(hashTable* hash_table, board* b, int currPlayer, int scorePlayer, bool maximizing, int alpha, int beta, int depth)
+int alphaBetaWithMemory(board* b, move* moves, int memoryDepth, int currDepth, int currPlayer, int scorePlayer, int firstGuess, bool maximizing, int alpha, int beta, int* count, int* totalCount)
 {
-	hashEntry* board_hash = hash_table->retrieve(b);
-	if (board_hash != NULL)
+	if (b->winner() != 0)
 	{
-		if (board_hash->lowerBound >= beta)
-			return board_hash->lowerBound;
-		if (board_hash->upperBound <= alpha)
-			return board_hash->upperBound;
-		alpha = std::max(alpha, board_hash->lowerBound);
-		beta = std::min(beta, board_hash->upperBound);
+		(*count) = 0;
+		(*totalCount)++;
+		return b->getValue(scorePlayer);
 	}
-	int g;
-	std::list<board*> children = b->getChildren(currPlayer);
-	std::list<board*>::iterator c = children.begin();
-	if (depth == 0 || b->winner() != 0)
+	int playCount = 0;
+	int gridCount = 0;
+	for (int gridY = 0; gridY < 3; ++gridY)
 	{
-		g = b->getValue(scorePlayer);
-	}
-	else if (maximizing)
-	{
-		g = INT_MIN;
-		int newAlpha = alpha;
-		while (g < beta && c != children.end())
+		for (int gridX = 0; gridX < 3; ++gridX)
 		{
-			g = std::max(g, alphaBetaWithMemory(hash_table, *c, !(currPlayer - 1) + 1, scorePlayer, !maximizing, newAlpha, beta, depth - 1));
-			newAlpha = std::max(newAlpha, g);
-			c++;
+			if (b->macroboard[gridX][gridY] == -1)
+			{
+				gridCount++;
+				for (int y = 0; y < 3; ++y)
+				{
+					for (int x = 0; x < 3; ++x)
+					{
+						if (b->field[3 * gridX + x][3 * gridY + y] == 0)
+						{
+							playCount++;
+						}
+					}
+				}
+			}
 		}
 	}
-	else {
-		g = INT_MAX;
-		int newBeta = beta;
-		while (g > alpha && c != children.end())
+
+	if (playCount > *count && currPlayer != scorePlayer)
+	{
+		(*count)--;
+		if (*count < 0)
+			*count = 0;
+		(*totalCount)++;
+		return b->getValue(scorePlayer);
+	}
+
+	int best = maximizing ? INT_MIN : INT_MAX;
+
+	if (firstGuess != -1)
+	{
+		int y = (int)firstGuess / 9;
+		int x = (int)firstGuess % 9;
+		int gridX = x / 3;
+		int gridY = y / 3;
+		x = x % 3;
+		y = y % 3;
+		if (b->macroboard[gridX][gridY] == -1 && b->field[3 * gridX + x][3 * gridY + y] == 0)
 		{
-			g = std::min(g, alphaBetaWithMemory(hash_table, *c, !(currPlayer - 1) + 1, scorePlayer, !maximizing, alpha, newBeta, depth - 1));
-			newBeta = std::min(g, newBeta);
-			c++;
+			board* newBoard = b->copy();
+			newBoard->play_move(currPlayer, 3 * gridX + x, 3 * gridY + y);
+			int nextCount = (int)ceil(*count / playCount);
+			if (nextCount <= 0)
+			{
+				nextCount = 1;
+			}
+			if (newBoard->macroboard[gridX][gridY] == currPlayer && gridCount <= 2)
+			{
+				nextCount *= 2;
+			}
+			(*count) -= nextCount;
+			move* newMove;
+			if (currDepth <= memoryDepth)
+				newMove = new move();
+			else
+				newMove = NULL;
+			int v = alphaBetaWithMemory(newBoard, newMove, memoryDepth, currDepth + 1, !(currPlayer - 1) + 1, scorePlayer, -1, !maximizing, alpha, beta, &nextCount, totalCount);
+			(*count) += nextCount;
+			playCount--;
+			if (currDepth <= 2)
+			{
+				newMove->player = !(currPlayer - 1) + 1;
+				newMove->score = v;
+				newMove->x = 3 * gridX + x;
+				newMove->y = 3 * gridY + y;
+				moves->nextMoves.push_back(newMove);
+				if (moves->nextMoves.size() == 1)
+				{
+					(*moves->nextMoves.begin())->bestMove = true;
+				}
+			}
+			delete newBoard;
+			if (maximizing)
+			{
+				if (v > best && currDepth <= memoryDepth)
+				{
+					std::list<move*>::iterator i = moves->nextMoves.begin();
+					while (i != moves->nextMoves.end())
+					{
+						(*i)->bestMove = false;
+						i++;
+					}
+					newMove->bestMove = true;
+				}
+				best = std::max(best, v);
+				alpha = std::max(alpha, best);
+			}
+			else {
+				if (v < best && currDepth <= memoryDepth)
+				{
+					std::list<move*>::iterator i = moves->nextMoves.begin();
+					while (i != moves->nextMoves.end())
+					{
+						(*i)->bestMove = false;
+						i++;
+					}
+					newMove->bestMove = true;
+				}
+				best = std::min(best, v);
+				beta = std::min(beta, best);
+			}
+
+			if (beta <= alpha)
+			{
+				return beta;
+			}
+		}
+		else {
+			firstGuess = -1;
 		}
 	}
-	hashEntry* newEntry = hash_table->store(b);
-	if (g <= alpha)
+	for (int gridY = 0; gridY < 3; ++gridY)
 	{
-		newEntry->upperBound = g;
-	}
-	if (g > alpha && g < beta)
-	{
-		newEntry->lowerBound = g;
-		newEntry->upperBound = g;
-	}
-	if (g >= beta)
-	{
-		newEntry->lowerBound = g;
-	}
-	return g;
-}
+		for (int gridX = 0; gridX < 3; ++gridX)
+		{
+			if (b->macroboard[gridX][gridY] == -1)
+			{
+				for (int y = 0; y < 3; ++y)
+				{
+					for (int x = 0; x < 3; ++x)
+					{
+						if (b->field[3 * gridX + x][3 * gridY + y] == 0 && 9*(3*gridY+y) + 3*gridX + x != firstGuess)
+						{
+							board* newBoard = b->copy();
+							newBoard->play_move(currPlayer, 3 * gridX + x,3 * gridY + y);
+							int nextCount = (int)ceil(*count / playCount);
+							if (nextCount <= 0)
+							{
+								nextCount = 1;
+							}
+							if (newBoard->macroboard[gridX][gridY] == currPlayer && gridCount <= 2)
+							{
+								nextCount *= 2;
+							}
+							(*count) -= nextCount;
+							move* newMove;
+							if (currDepth <= memoryDepth)
+								newMove = new move();
+							else
+								newMove = NULL;
+							int v = alphaBetaWithMemory(newBoard, newMove, memoryDepth, currDepth + 1, !(currPlayer - 1) + 1, scorePlayer, -1, !maximizing, alpha, beta, &nextCount, totalCount);
+							(*count) += nextCount;
+							playCount--;
+							if (currDepth <= 2)
+							{
+								newMove->player = !(currPlayer - 1) + 1;
+								newMove->score = v;
+								newMove->x = 3 * gridX + x;
+								newMove->y = 3 * gridY + y;
+								moves->nextMoves.push_back(newMove);
+								if (moves->nextMoves.size() == 1)
+								{
+									(*moves->nextMoves.begin())->bestMove = true;
+								}
+							}
+							delete newBoard;
+							if (maximizing)
+							{
+								if (v > best && currDepth <= memoryDepth)
+								{
+									std::list<move*>::iterator i = moves->nextMoves.begin();
+									while (i != moves->nextMoves.end())
+									{
+										(*i)->bestMove = false;
+										i++;
+									}
+									newMove->bestMove = true;
+								}
+								best = std::max(best, v);
+								alpha = std::max(alpha, best);
+							}
+							else {
+								if (v < best && currDepth <= memoryDepth)
+								{
+									std::list<move*>::iterator i = moves->nextMoves.begin();
+									while (i != moves->nextMoves.end())
+									{
+										(*i)->bestMove = false;
+										i++;
+									}
+									newMove->bestMove = true;
+								}
+								best = std::min(best, v);
+								beta = std::min(beta, best);
+							}
 
-int MTDF(board* b, int currPlayer, int firstGuess, int depth)
-{
-	int g = firstGuess;
-	int upperBound = INT_MAX;
-	int lowerBound = INT_MIN;
-	
-	do
-	{
-		int beta;
-		if (g == lowerBound)
-			beta = g + 1;
-		else
-			beta = g;
-		hashTable* hash_table = new hashTable();
-		g = alphaBetaWithMemory(hash_table, b, currPlayer, currPlayer, true, beta - 1, beta, depth);
-		delete hash_table;
-		if (g < beta)
-			upperBound = g;
-		else
-			lowerBound = g;
-	} while (lowerBound < upperBound);
-	return g;
-}
-
-int iterative_deepening(board* b, int currPlayer, int time)
-{
-	int start_time = clock();
-	int firstGuess = 0;
-	for (int d = 1; d < 12; ++d)
-	{
-		firstGuess = MTDF(b, currPlayer, firstGuess, d);
-		if ((clock() - start_time) / double(CLOCKS_PER_SEC) * 1000 >= time)
-			break;
+							if (beta <= alpha)
+							{
+								return beta;
+							}
+						}
+					}
+				}
+			}
+		}
 	}
-	return firstGuess;
+	return best;
 }
 
 int main()
 {
+
 	settings* gameSettings = new settings();
 	board* gameBoard = new board();
-	int move = 1;
-	int timeLeft = 10000;
-	int lastTime = timeLeft;
-	int depth = 5;
+	int currMove = 1;
+	//int lastTime = timeLeft;
 	std::string line;
 	for (int y = 0; y < 9; ++y)
 	{
@@ -897,29 +1138,45 @@ int main()
 	}
 
 	int timePool;
-	int expectedMoveCount = 12;
+	int expectedMoveCount = 28;
 	int countPerMs = 0;
+	int round;
+	int indices[81];
+	for (int i = 0; i < 81; ++i)
+		indices[i] = -1;
+	board* prevBoard = new board();
+	bool predictMove = false;
+	move* newMoves = new move();
+	move* bestMove = NULL;
 	while (gameBoard->winner() == 0)
 	{
 		do
 		{
 			std::getline(std::cin, line);
-		} while (evaluateInput(line, gameSettings, gameBoard, &move, &timeLeft));
-		int start_time = clock();
-		timePool = timeLeft;
-		int time = timePool / expectedMoveCount;
-
-		std::cerr << "Move: " << move << std::endl;
-		std::cerr << "Time pool: " << timePool << " ms" << std::endl;
-		std::cerr << "Time allocated: " << time << " ms" << std::endl;
-
-		if (move == 1)
+		} while (evaluateInput(line, gameSettings, gameBoard, &currMove, &timePool, &round));
+		
+		std::cerr << "Move: " << currMove << std::endl;
+		
+		if (currMove == 1)
 		{
 			std::cout << "place_move 4 4" << std::endl;
 			std::cout.flush();
-			std::cerr << "place_move 4 4" << std::endl;
+			indices[0] = 4 * 9 + 4;
+		}
+		else if (indices[(currMove - 1) / 2] != -1)
+		{
+			int index = indices[(currMove - 1) / 2];
+			int x = index % 9;
+			int y = (int)((index - x) / 9);
+			std::cerr << "Move already found: " << x << "," << y << std::endl;
+			std::cout << "place_move " << x << " " << y << std::endl;
+			std::cout.flush();
 		}
 		else {
+			int start_time = clock();
+			int time = timePool / expectedMoveCount;
+			std::cerr << "Time pool: " << timePool << " ms" << std::endl;
+			std::cerr << "Time allocated: " << time << " ms" << std::endl;
 			if (countPerMs == 0)
 			{
 				int currTime = clock();
@@ -927,26 +1184,58 @@ int main()
 				while (clock() / double(CLOCKS_PER_SEC) * 1000 < currTime / double(CLOCKS_PER_SEC) * 1000 + 10)
 				{
 					int testCount = 100;
-					alphaBeta(gameBoard, gameSettings->your_botid, gameSettings->your_botid, true, INT_MIN, INT_MAX, &testCount, &testTotalCount, false, 0);
+					move* testMoves = new move();
+					alphaBetaWithMemory(gameBoard, testMoves, 2, 0, gameSettings->your_botid, gameSettings->your_botid, -1, true, INT_MIN, INT_MAX, &testCount, &testTotalCount);
 				}
 				countPerMs = testTotalCount / 10;
 			}
+			if (bestMove != NULL)
+			{
+				for (int y = 0; y < 9; ++y)
+				{
+					for (int x = 0; x < 9; ++x)
+					{
+						if (gameBoard->field[x][y] != prevBoard->field[x][y])
+						{
+							if (bestMove != NULL)
+								bestMove = bestMove->getNextMove(x, y);
+						}
+					}
+				}
+			}
+			int bestMoveIndex = -1;
+			if (bestMove != NULL)
+			{
+				bestMoveIndex = bestMove->getBestIndex();
+				int bestMoveScore = bestMove->getNextMove(bestMoveIndex % 9, bestMoveIndex / 9)->score;
+				std::cerr << "Best guess: " << bestMoveIndex % 9 << "," << bestMoveIndex / 9 << " with score " << bestMoveScore << std::endl;
+			}
+			else {
+				std::cerr << "No best guess." << std::endl;
+			}
+			delete newMoves;
+			newMoves = new move();
 			std::cerr << countPerMs << " nodes analyzed per ms" << std::endl;
  			int count = countPerMs * time;
+			int newCount = count;
 			std::cerr << count << " nodes to be analyzed in " << time << " ms" << std::endl;
 			int originalCount = count;
 			int totalCount = 0;
 			int startT = clock();
-			int score = MTDF(gameBoard, gameSettings->your_botid, 0, 9);
-			int index = alphaBeta(gameBoard, gameSettings->your_botid, gameSettings->your_botid, true, INT_MIN, INT_MAX, &count, &totalCount, true, clock());
+			int score = alphaBetaWithMemory(gameBoard, newMoves, 2, 0, gameSettings->your_botid, gameSettings->your_botid, bestMoveIndex, true, INT_MIN, INT_MAX, &count, &totalCount);
 			int stopT = clock();
+			int index = newMoves->getBestIndex();
 			int x = index % 9;
 			int y = (int)((index - x) / 9);
 
 			std::cout << "place_move " << x << " " << y << std::endl;
 			std::cout.flush();
-			std::cerr << "place_move " << x << " " << y << std::endl;
 			int stop_time = clock();
+			indices[(currMove - 1) / 2] = index;
+			bestMove = newMoves->getNextMove(x, y);
+			std::cerr << "Best move: " << x << "," << y << " with score: " << score << std::endl;
+			gameBoard->play_move(gameSettings->your_botid, x, y);
+			prevBoard = gameBoard->copy();
 
 			int timeInMs = (stopT - startT) / double(CLOCKS_PER_SEC) * 1000;
 			if (timeInMs > 0)
@@ -954,7 +1243,7 @@ int main()
 			else
 				countPerMs = 0;
 			
-			if (expectedMoveCount > 2)
+			if (expectedMoveCount > 1)
 				expectedMoveCount--;
 			std::cerr << totalCount << "(" << (double)totalCount/originalCount *100 << "%) nodes actually analyzed in " << (stop_time - start_time) / double(CLOCKS_PER_SEC) * 1000 << " ms" << std::endl;
 		}
